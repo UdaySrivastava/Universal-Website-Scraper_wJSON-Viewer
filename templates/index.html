@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Universal Website Scraper (MVP)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color-scheme: light;
+      }
+      body {
+        margin: 0;
+        background: radial-gradient(circle at top, #e0f2ff 0, #f5f7fb 45%, #eef2ff 100%);
+        color: #0f172a;
+      }
+      .page {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 24px 16px 48px;
+      }
+      .card {
+        background: #ffffff;
+        border-radius: 18px;
+        padding: 22px 24px 24px;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.16);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+      }
+      h1 {
+        margin: 0 0 6px;
+        font-size: 1.8rem;
+        font-weight: 650;
+        letter-spacing: -0.03em;
+        color: #0f172a;
+      }
+      .subtitle {
+        margin-bottom: 20px;
+        color: #64748b;
+        font-size: 0.95rem;
+      }
+
+      form {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+      input[type="url"] {
+        flex: 1 1 260px;
+        border-radius: 999px;
+        border: 1px solid #cbd5f5;
+        padding: 11px 16px;
+        font-size: 0.95rem;
+        outline: none;
+        background: #f8fafc;
+        transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+      }
+      input[type="url"]:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.22);
+        background: #ffffff;
+      }
+      button {
+        border-radius: 999px;
+        border: none;
+        padding: 10px 20px;
+        font-size: 0.95rem;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: linear-gradient(135deg, #2563eb, #2563eb);
+        color: #fff;
+        box-shadow: 0 14px 30px rgba(37, 99, 235, 0.45);
+        transition: transform 0.08s ease-out, box-shadow 0.08s ease-out,
+          background 0.1s ease-out;
+      }
+      button:hover {
+        background: linear-gradient(135deg, #1d4ed8, #1d4ed8);
+        transform: translateY(-1px);
+        box-shadow: 0 18px 40px rgba(37, 99, 235, 0.55);
+      }
+      button:disabled {
+        opacity: 0.7;
+        cursor: default;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .status-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+      }
+      .status {
+        font-size: 0.88rem;
+        color: #6b7280;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        background: #ecf5ff;
+        color: #2563eb;
+      }
+      .pill-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: #22c55e;
+        box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.22);
+      }
+
+      .error {
+        margin-top: 8px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: #fef2f2;
+        color: #b91c1c;
+        font-size: 0.86rem;
+      }
+
+      /* META HEADER */
+      .meta-header {
+        margin-top: 18px;
+        padding: 14px 16px 16px;
+        border-radius: 14px;
+        background: linear-gradient(120deg, #eff6ff, #eef2ff);
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        display: flex;
+        gap: 16px;
+        justify-content: space-between;
+        align-items: flex-start;
+        flex-wrap: wrap;
+      }
+      .meta-main {
+        min-width: 0;
+        flex: 1 1 260px;
+      }
+      .meta-url-label {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748b;
+        margin-bottom: 4px;
+      }
+      .meta-url {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #1d4ed8;
+        overflow-wrap: anywhere;
+      }
+      .meta-description-top {
+        margin-top: 4px;
+        font-size: 0.9rem;
+        color: #4b5563;
+        overflow-wrap: anywhere;
+      }
+      .meta-side {
+        text-align: right;
+        min-width: 160px;
+      }
+      .meta-side-label {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #64748b;
+        margin-bottom: 4px;
+      }
+      .meta-side-value {
+        font-size: 0.9rem;
+        color: #0f172a;
+        font-weight: 500;
+      }
+
+      /* META CARDS */
+      .meta {
+        margin-top: 16px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 10px 14px;
+      }
+      .meta-card {
+        background: #f9fafb;
+        border-radius: 12px;
+        padding: 10px 12px;
+        border: 1px solid #e5e7eb;
+      }
+      .meta-card-label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #6b7280;
+        margin-bottom: 4px;
+      }
+      .meta-card-value {
+        font-size: 0.9rem;
+        color: #111827;
+        overflow-wrap: anywhere;
+      }
+
+      /* KPI CARDS */
+      .kpi-row {
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 10px;
+      }
+      .kpi-card {
+        border-radius: 12px;
+        padding: 10px 12px;
+        background: linear-gradient(135deg, #e0edff, #f1f5ff);
+        border: 1px solid rgba(37, 99, 235, 0.25);
+      }
+      .kpi-label {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #1d4ed8;
+        margin-bottom: 4px;
+      }
+      .kpi-value {
+        font-size: 1.25rem;
+        font-weight: 650;
+        color: #0f172a;
+      }
+
+      .sections {
+        margin-top: 22px;
+        border-top: 1px solid #e5e7eb;
+        padding-top: 16px;
+      }
+      .sections-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+      }
+      .sections-title {
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #111827;
+      }
+      .sections-count {
+        font-size: 0.8rem;
+        color: #6b7280;
+      }
+
+      .section-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .section-item {
+        border-radius: 11px;
+        border: 1px solid #e5e7eb;
+        background: #f9fafb;
+        overflow: hidden;
+      }
+      .section-header {
+        padding: 10px 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+      }
+      .section-main {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+      }
+      .section-label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #111827;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .section-type {
+        font-size: 0.78rem;
+        color: #6b7280;
+      }
+      .section-id {
+        font-size: 0.78rem;
+        color: #9ca3af;
+      }
+      .chevron {
+        font-size: 0.8rem;
+        color: #6b7280;
+      }
+      .section-body {
+        border-top: 1px solid #e5e7eb;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.18s ease-out, padding 0.18s ease-out;
+      }
+      .section-body.open {
+        padding: 8px 10px 10px;
+        max-height: 420px;
+      }
+      .section-json {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+          "Courier New", monospace;
+        font-size: 0.8rem;
+        background: #020617;
+        color: #e5e7eb;
+        border-radius: 8px;
+        padding: 8px 10px;
+        overflow: auto;
+        max-height: 360px;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 7px;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        background: #dbeafe;
+        color: #1d4ed8;
+      }
+
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+      .secondary-btn {
+        background: #020617;
+        box-shadow: none;
+        padding-inline: 14px;
+      }
+
+      .footer-credit {
+        position: fixed;
+        bottom: 12px;
+        right: 16px;
+        font-size: 0.78rem;
+        color: #1e3a8a; /* dark blue */
+        opacity: 0.8;
+        user-select: none;
+        pointer-events: none;
+        font-weight: 500;
+}
+
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="card">
+        <h1>Universal Website Scraper (MVP)</h1>
+        <p class="subtitle">Enter any http(s) URL and inspect a structured, section-aware JSON view.</p>
+
+        <form id="scrape-form">
+          <input
+            id="url-input"
+            name="url"
+            type="url"
+            placeholder="https://example.com"
+            required
+          />
+          <button type="submit" id="scrape-btn">
+            <span>Scrape</span>
+            <span id="spinner" style="display: none">⏳</span>
+          </button>
+        </form>
+
+        <div class="status-row">
+          <div class="status" id="status-text">Idle. Provide a URL and click “Scrape”.</div>
+          <div class="pill">
+            <span class="pill-dot"></span>
+            <span>Server online</span>
+          </div>
+        </div>
+
+        <div id="error-box" class="error" style="display: none"></div>
+
+        <div id="result-container" style="display: none">
+          <!-- Meta header (URL, description, scraped time) and cards will be injected into this block -->
+          <div id="meta-block"></div>
+
+          <!-- KPI cards -->
+          <div class="kpi-row" id="kpi-row" style="display: none">
+            <div class="kpi-card">
+              <div class="kpi-label">Clicks</div>
+              <div class="kpi-value" id="kpi-clicks">0</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Scrolls</div>
+              <div class="kpi-value" id="kpi-scrolls">0</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">Pages visited</div>
+              <div class="kpi-value" id="kpi-pages">0</div>
+            </div>
+          </div>
+
+          <div class="sections">
+            <div class="sections-header">
+              <div>
+                <div class="sections-title">Sections</div>
+                <div class="sections-count" id="sections-count"></div>
+              </div>
+              <div class="top-actions">
+                <button type="button" class="secondary-btn" id="download-json-btn">
+                  Download JSON
+                </button>
+              </div>
+            </div>
+
+            <ul class="section-list" id="sections-list"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const form = document.getElementById("scrape-form");
+      const urlInput = document.getElementById("url-input");
+      const scrapeBtn = document.getElementById("scrape-btn");
+      const spinner = document.getElementById("spinner");
+      const statusText = document.getElementById("status-text");
+      const errorBox = document.getElementById("error-box");
+      const resultContainer = document.getElementById("result-container");
+      const metaBlock = document.getElementById("meta-block");
+      const sectionsList = document.getElementById("sections-list");
+      const sectionsCount = document.getElementById("sections-count");
+      const downloadJsonBtn = document.getElementById("download-json-btn");
+      const kpiRow = document.getElementById("kpi-row");
+      const kpiClicks = document.getElementById("kpi-clicks");
+      const kpiScrolls = document.getElementById("kpi-scrolls");
+      const kpiPages = document.getElementById("kpi-pages");
+
+      let lastResult = null;
+
+      function setLoading(isLoading) {
+        scrapeBtn.disabled = isLoading;
+        spinner.style.display = isLoading ? "inline-block" : "none";
+        statusText.textContent = isLoading ? "Scraping in progress…" : "Idle. Provide a URL and click “Scrape”.";
+      }
+
+      function showError(msg) {
+        errorBox.style.display = "block";
+        errorBox.textContent = msg;
+      }
+
+      function clearError() {
+        errorBox.style.display = "none";
+        errorBox.textContent = "";
+      }
+
+      function renderMeta(result) {
+        const { url, scrapedAt, meta, interactions } = result;
+
+        const title = meta.title || "—";
+        const description = meta.description || "—";
+        const language = meta.language || "—";
+        const canonical = meta.canonical || "—";
+
+        metaBlock.innerHTML = `
+          <div class="meta-header">
+            <div class="meta-main">
+              <div class="meta-url-label">URL scraped</div>
+              <div class="meta-url">${url}</div>
+              <div class="meta-description-top">${title}</div>
+            </div>
+            <div class="meta-side">
+              <div class="meta-side-label">Scraped at</div>
+              <div class="meta-side-value">${scrapedAt}</div>
+            </div>
+          </div>
+
+          <div class="meta">
+            <div class="meta-card">
+              <div class="meta-card-label">Title</div>
+              <div class="meta-card-value">${title}</div>
+            </div>
+            <div class="meta-card">
+              <div class="meta-card-label">Description</div>
+              <div class="meta-card-value">${description}</div>
+            </div>
+            <div class="meta-card">
+              <div class="meta-card-label">Language</div>
+              <div class="meta-card-value">${language}</div>
+            </div>
+            <div class="meta-card">
+              <div class="meta-card-label">Canonical</div>
+              <div class="meta-card-value">${canonical}</div>
+            </div>
+          </div>
+        `;
+
+        // KPI cards
+        const clicksCount = (interactions.clicks || []).length;
+        const scrollsCount = interactions.scrolls || 0;
+        const pagesCount = (interactions.pages || []).length;
+
+        kpiClicks.textContent = clicksCount;
+        kpiScrolls.textContent = scrollsCount;
+        kpiPages.textContent = pagesCount;
+        kpiRow.style.display = "grid";
+      }
+
+      function renderSections(result) {
+        const sections = result.sections || [];
+        sectionsCount.textContent = `${sections.length} section${sections.length === 1 ? "" : "s"} extracted`;
+        sectionsList.innerHTML = "";
+
+        sections.forEach((section, index) => {
+          const li = document.createElement("li");
+          li.className = "section-item";
+
+          const header = document.createElement("div");
+          header.className = "section-header";
+
+          const main = document.createElement("div");
+          main.className = "section-main";
+
+          const labelEl = document.createElement("div");
+          labelEl.className = "section-label";
+          labelEl.textContent = section.label || `Section ${index + 1}`;
+
+          const typeEl = document.createElement("div");
+          typeEl.className = "section-type";
+          typeEl.innerHTML = `<span class="badge">${section.type}</span>`;
+
+          const idEl = document.createElement("div");
+          idEl.className = "section-id";
+          idEl.textContent = section.id;
+
+          main.appendChild(labelEl);
+          main.appendChild(typeEl);
+          main.appendChild(idEl);
+
+          const chevron = document.createElement("div");
+          chevron.className = "chevron";
+          chevron.textContent = "▾";
+
+          header.appendChild(main);
+          header.appendChild(chevron);
+
+          const body = document.createElement("div");
+          body.className = "section-body";
+          const pre = document.createElement("pre");
+          pre.className = "section-json";
+          pre.textContent = JSON.stringify(section, null, 2);
+          body.appendChild(pre);
+
+          header.addEventListener("click", () => {
+            const open = body.classList.toggle("open");
+            chevron.textContent = open ? "▴" : "▾";
+          });
+
+          li.appendChild(header);
+          li.appendChild(body);
+          sectionsList.appendChild(li);
+        });
+      }
+
+      function downloadJSON() {
+        if (!lastResult) return;
+        const blob = new Blob([JSON.stringify({ result: lastResult }, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "scrape-result.json";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
+
+      downloadJsonBtn.addEventListener("click", downloadJSON);
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        clearError();
+        resultContainer.style.display = "none";
+
+        const url = urlInput.value.trim();
+        if (!url) return;
+
+        setLoading(true);
+
+        try {
+          const resp = await fetch("/scrape", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ url }),
+          });
+
+          if (!resp.ok) {
+            const msg = await resp.text();
+            showError(`Request failed (${resp.status}): ${msg}`);
+            return;
+          }
+
+          const data = await resp.json();
+          const result = data.result || data;
+          lastResult = result;
+
+          renderMeta(result);
+          renderSections(result);
+
+          resultContainer.style.display = "block";
+
+          if ((result.errors || []).length > 0) {
+            const messages = result.errors.map((e) => `${e.phase}: ${e.message}`).join(" | ");
+            showError(`Some issues occurred during scraping: ${messages}`);
+          }
+        } catch (err) {
+          console.error(err);
+          showError("Unexpected error while calling the API.");
+        } finally {
+          setLoading(false);
+        }
+      });
+    </script>
+    <div class="footer-credit">Made by Uday Srivastava</div>
+  </body>
+</html>
