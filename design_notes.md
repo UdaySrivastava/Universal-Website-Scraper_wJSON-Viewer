@@ -1,8 +1,8 @@
 # Design Notes
 
-Static Fetch → Parse → Enough Content? → Yes → Done
-                                        ↓ No
-                                        JS Rendering → Dynamic Interactions → Parse → Final JSON
+ Static Fetch → Parse → Enough Content? → Yes → Done
+                                ↓ (if) No
+                      JS Rendering → Dynamic Interactions → Parse → Final JSON
 
 ## Static vs JS Fallback
 
